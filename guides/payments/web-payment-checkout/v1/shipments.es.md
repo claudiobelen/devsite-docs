@@ -33,6 +33,7 @@ En el backend del negocio, configurá el peso y las dimensiones de los paquetes 
   $shipments = new MercadoPago\Shipments();
   $shipments->mode = "me2";
   $shipments->dimensions = "30x30x30,500";
+  // No es obligatorio setear la propiedad receiver_address
   $shipments->receiver_address=array(
 		"zip_code" => "5700",
 		"street_number" => 123,
@@ -49,6 +50,8 @@ En el backend del negocio, configurá el peso y las dimensiones de los paquetes 
 Preference preference = new Preference();
 
 Shipments shipments = new Shipments();
+
+// No es obligatorio setear la propiedad AddressReceiver
 shipments.setMode(Shipments.ShipmentMode.me2)
     .setDimensions("30x30x30,500")
     .setReceiverAddress(new AddressReceiver("5700", 123, "street", "4", "C"));
@@ -60,6 +63,7 @@ preference.setShipments(shipments);
 ```node
 var preference = {}
 
+// No es obligatorio setear la propiedad receiver_address
 var shipments = {
   "mode": "me2",
   "dimensions": "30x30x30,500",
@@ -82,6 +86,7 @@ preference = new MercadoPago::Preference.new();
 shipment = MercadoPago::Shipment.new
 shipment.mode = me2
 shipment.dimensions = "30x30x30,500"
+# No es obligatorio setear la propiedad receiver_address
 shipment.receiver_address = {
 	zip_code: "5700",
 	street_number: 123,
@@ -96,6 +101,7 @@ preference.shipment = shipment
 ```csharp
 Preference preference = new Preference();
 
+// No es obligatorio setear la propiedad ReceiverAddress
 MercadoPago.DataStructures.Preference.Shipment shipments = new MercadoPago.DataStructures.Preference.Shipment()
  {
      Mode = MercadoPago.Common.ShipmentMode.Me2,
