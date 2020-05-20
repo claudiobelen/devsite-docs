@@ -11,39 +11,25 @@ sites_supported:
   - mlm
 ---
 
-# Agregando envíos
+# Como ofrecer envíos en mi negocio
 
-> WARNING
->
->Nota
->
-> Esta documentación es sobre la versión antigua de Checkout. 
-> 
-> Ten en cuenta que solo hay soporte activo y nuevas funcionalidades en la [nueva versión del Checkout de Mercado Pago](https://www.mercadopago.com.ar/developers/es/guides/payments/web-payment-checkout/introduction/).
+La siguiente documentación te enseñará a sumar Mercado Envíos en el CheckOut de Mercado Pago, en tan solo 2 pasos.
 
-Implementa la logística de tu negocio con **Mercado Envíos**.
 
-* Te damos todo resuelto: Recibe el pago del producto y del envío en la misma operación.
-* Sólo tienes que imprimir la etiqueta de Mercado Envíos y despachar el paquete en el correo.
-* Te protegemos frente a _chargebacks_ o pérdidas en el correo, sin necesidad de que tengas que presentar documentación.
+## Paso 1: Carga tu dirección
+Desde la cuenta del vendedor, ingresa al sector de [activación](http://shipping.mercadopago.com.ar/optin/doOptin?execution=e1s1&goUrl=&buttonText=) y completa los datos que se solicitan. 
+Usaremos ese domicilio que cargues para mostrar los puntos de despacho cercanos a los que el vendedor podrá llevar los paquetes, y calcular los costos de envío.
 
-## Cómo funciona
 
-La siguiente documentación te permitirá ofrecer en el checkout de Mercado Pago una opción de envío y que el cliente pague el costo del envío junto con el pago del producto.
-
-Te recomendamos integrar la calculadora de costos de envíos en tu checkout.
-
-## Cómo implementarlo
-
-### Paso 1: Activa tu cuenta para utilizar Mercado Envíos
-[Activa tu cuenta](http://shipping.mercadopago.com.ar/optin/doOptin?execution=e1s1&goUrl=&buttonText=) cargando tu dirección. La misma debe ser la dirección de despacho y será utilizada para calcular el costo del envío.
-
-### Paso 2: Agrega Mercado Envíos a tu checkout
-Agrega las dimensiones y peso de tus productos en la preferencia de pago.
+## Paso 2: Carga las características de los paquetes que enviarás
+En el backend del negocio, configurá el peso y las dimensiones de los paquetes tal como ves en el siguiente código.
 
 [[[
 ```php
+
 <?php
+  $preference = new MercadoPago\Preference();
+
   $shipments = new MercadoPago\Shipments();
   $shipments->mode = "me2";
   $shipments->dimensions = "30x30x30,500";
@@ -51,18 +37,29 @@ Agrega las dimensiones y peso de tus productos en la preferencia de pago.
 		"zip_code" => "5700",
 		"street_number" => 123,
 		"street_name" => "Street",
-		"floor" => 4,
+		"floor" => "4",
 		"apartment" => "C"
   );
+
+  $preference->shipments = $shipments;
+
 ?>
 ```
 ```java
+Preference preference = new Preference();
+
 Shipments shipments = new Shipments();
 shipments.setMode(Shipments.ShipmentMode.me2)
     .setDimensions("30x30x30,500")
-    .setReceiverAddress(new AddressReceiver("5700", 123, "street", 4, "C"));
+    .setReceiverAddress(new AddressReceiver("5700", 123, "street", "4", "C"));
+
+preference.setShipments(shipments);
+
+
 ```
 ```node
+var preference = {}
+
 var shipments = {
   "mode": "me2",
   "dimensions": "30x30x30,500",
@@ -70,12 +67,18 @@ var shipments = {
 		"zip_code": "5700",
 		"street_number": 123,
 		"street_name": "Street",
-		"floor": 4,
+		"floor": "4",
 		"apartment": "C"
 	}
 };
+
+preference.shipments = shipments
+
 ```
 ```ruby
+
+preference = new MercadoPago::Preference.new();
+
 shipment = MercadoPago::Shipment.new
 shipment.mode = me2
 shipment.dimensions = "30x30x30,500"
@@ -83,24 +86,30 @@ shipment.receiver_address = {
 	zip_code: "5700",
 	street_number: 123,
 	street_name: "Street",
-	floor: 4,
+	floor: "4",
 	apartment: "C"
 }
+
+preference.shipment = shipment
+
 ```
 ```csharp
-Shipments shipments = new Shipments()
+Preference preference = new Preference();
+
+MercadoPago.DataStructures.Preference.Shipment shipments = new MercadoPago.DataStructures.Preference.Shipment()
  {
-     Mode = "me2",
+     Mode = MercadoPago.Common.ShipmentMode.Me2,
      Dimensions = "30x30x30,500",
-     Description = "Ergonomic Silk Shirt",
-     ReceiverAddress = new ReceiverAddress(){
+     ReceiverAddress = new MercadoPago.DataStructures.Preference.ReceiverAddress(){
       Zip_code = "5700",
       StreetNumber = 123,
       StreetName = "Street",
-      Floor = 4,
+      Floor = "4",
       Apartment = "C"
      }
  };
+
+ preference.Shipments = shipments
 ```
 ]]]
 
@@ -108,67 +117,54 @@ Shipments shipments = new Shipments()
 >
 > Nota
 >
-> El formato de las dimensiones
+> Respeta el formato de las dimensiones:
 ```alto x ancho x largo (centímetros), peso (gramos)```
-> Si indicas mal las dimensiones y no coinciden con el paquete físico, el _carrier_ podría no admitir el envío. En caso de que te admitan el paquete, te descontaremos de tu cuenta la diferencia automáticamente.
+> Las dimensiones que indiques deben coincidir con las de tu paquete para que el carrier no te rechace el envío. Si no lo rechaza y las dimensiones son incorrectas, te descontaremos esa diferencia del monto total de tu cuenta de forma automática.
 
-#### Retiro por sucursal
-Puedes ofrecer la posibilidad de retirar el producto por tu local, indicándole al comprador dónde y cuándo debe retirarlo. Para esto, debes incluir:
 
-[[[
-```php
-<?php
-  $shipments = new MercadoPago\Shipments();
-  // ...
-  $shipments->local_pickup = true;
-  // ...
-?>
-```
-```java
-Shipments shipments = new Shipments();
-// ...
-shipments.setLocalPickup(true);
-// ...
-```
-```node
-var shipments = {
-  //..
-  "local_pickup": true
-  //..
-}
-```
-```ruby
-shipment = MercadoPago::Shipment.new
-# ...
-shipment.local_pickup = true
-# ...
-```
-]]]
 
-#### Ofrece envíos gratis
 
-Debes indicar el medio de envío que vas a ofrecer de manera gratuita. El monto del mismo te será debitado de tu cuenta al momento de recibir un pago.
+### Podés elegir qué tipo de envío ofrecer
+
+#### Envíos gratis
+
+El costo de envío será debitado de la cuenta del vendedor cuando reciba un pago. Estos [son los costos de que tendrá]().
+Consultá los [id de medios de envío](https://api.mercadolibre.com/shipping_methods/search?site_id=MLA&shipping_mode=me2&allow_free_shipping=true) disponibles para saber cuál poner en el código.
+
 
 [[[
 ```php
 <?php
+  $preference = new MercadoPago\Preference();
+
   $shipments = new MercadoPago\Shipments();
   // ...
+  // 73328 = Normal a Domicilio, OCA Estándar
   $shipments->free_methods = array(
-    array("id"=>73328)
+    array("id"=>73328) 
   );
   // ...
+
+  $preference->shipments = $shipments;
 ?>
 ```
 ```java
+Preference preference = new Preference();
+
 Shipments shipments = new Shipments();
 // ...
-shipment.setFreeMethods(73328); // OCA Estándar
+// 73328 = Normal a Domicilio, OCA Estándar
+shipments.setFreeMethods(73328); 
 // ...
+preference.setShipments(shipments);
+
 ```
 ```node
+var preference = {}
+
 var shipments = {
   //..
+  // 73328 = Normal a Domicilio, OCA Estándar
   "free_methods": [
       {
           "id": 73328
@@ -176,27 +172,102 @@ var shipments = {
     ],
   //..
 }
+preference.shipments = shipments
+
 ```
 ```ruby
-shipment = MercadoPago::Shipment.new
+preference = new MercadoPago::Preference.new();
+
+shipments = MercadoPago::Shipment.new
 # ...
-shipment.free_methods = [
+# 73328 = Normal a Domicilio, OCA Estándar
+shipments.free_methods = [
   {
     id: 73328
   }
 ]
 # ...
+preference.shipment = shipments
+
+```
+```csharp
+Preference preference = new Preference();
+
+MercadoPago.DataStructures.Preference.Shipment shipments = new MercadoPago.DataStructures.Preference.Shipment();
+//...
+// 73328 = Normal a Domicilio, OCA Estándar
+shipments.FreeMethods = new List<int> { 73328 };
+//...
+preference.Shipments = shipments;
 ```
 ]]]
 
 
 
-Consulta los _id_ de [medio de envío](https://api.mercadolibre.com/sites/MLA/shipping_methods?marketplace=NONE) disponibles.
+#### Retiro en tu domicilio
+Podés ofrecer la posibilidad de retirar el producto por el local del vendedor, indicándole al comprador cuándo y dónde retirarlo.
+
+[[[
+```php
+<?php
+  $preference = new MercadoPago\Preference();
+
+  $shipments = new MercadoPago\Shipments();
+  // ...
+  $shipments->local_pickup = true;
+  // ...
+
+  $preference->shipments = $shipments;
+?>
+```
+```java
+Preference preference = new Preference();
+
+Shipments shipments = new Shipments();
+// ...
+shipments.setLocalPickup(true);
+// ...
+preference.setShipments(shipments);
+
+```
+```node
+var preference = {}
+
+var shipments = {
+  //..
+  "local_pickup": true
+  //..
+}
+preference.shipments = shipments
+
+```
+```ruby
+preference = new MercadoPago::Preference.new();
+
+shipments = MercadoPago::Shipment.new
+# ...
+shipments.local_pickup = true
+# ...
+preference.shipment = shipments
+
+```
+```csharp
+Preference preference = new Preference();
+
+MercadoPago.DataStructures.Preference.Shipment shipments = new MercadoPago.DataStructures.Preference.Shipment();
+//...
+shipments.LocalPickUp = true;
+//...
+preference.Shipments = shipments;
+```
+]]]
 
 
-#### Intégralo en el Checkout
 
-Un ejemplo de Checkout con Mercado Envíos queda de la siguiente manera:
+### Asegurate que esté todo bien configurado
+
+Este es un ejemplo de un checkout con la integración de Mercado Envíos lista.
+Si tu checkout se ve así, significa que tenés todo bien configurado y ya empezaste a ofrecer envíos.
 
 [[[
 ```php
@@ -211,7 +282,7 @@ Un ejemplo de Checkout con Mercado Envíos queda de la siguiente manera:
   $item->unit_price = [FAKER][COMMERCE][PRICE];
 
   $payer = new MercadoPago\Payer();
-  $payer->email = "test_user@testuser.com";
+  $payer->email = "[FAKER][INTERNET][FREE_EMAIL]";
 
   $shipments = new MercadoPago\Shipments();
   $shipments->mode = "me2";
@@ -224,7 +295,7 @@ Un ejemplo de Checkout con Mercado Envíos queda de la siguiente manera:
 		"zip_code" => "5700",
 		"street_number" => 123,
 		"street_name" => "Street",
-		"floor" => 4,
+		"floor" => "4",
 		"apartment" => "C"
   );
 
@@ -253,7 +324,7 @@ payer.setEmail("[FAKER][INTERNET][FREE_EMAIL]");
 Shipments shipments = new Shipments();
 shipments.setMode(Shipments.ShipmentMode.me2)
     .setDimensions("30x30x30,500")
-    .setReceiverAddress(new AddressReceiver("5700", 123, "street", 4, "C"));
+    .setReceiverAddress(new AddressReceiver("5700", 123, "street", "4", "C"));
 
 preference.setPayer(payer);
 preference.appendItem(item);
@@ -273,17 +344,17 @@ var item = {
 }
 
 var payer = {
-  "email": "demo@mail.com"
+  "email": "[FAKER][INTERNET][FREE_EMAIL]"
 }
 
 var shipments = {
   "mode": "me2",
   "dimensions": "30x30x30,500",
-	"receiver_address": {
+  "receiver_address": {
 		"zip_code": "5700",
 		"street_number": 123,
 		"street_name": "Street",
-		"floor": 4,
+		"floor": "4",
 		"apartment": "C"
 	},
   "free_methods": [
@@ -324,7 +395,7 @@ shipment.receiver_address = {
 	zip_code: "5700",
 	street_number: 123,
 	street_name: "Street",
-	floor: 4,
+	floor: "4",
 	apartment: "C"
 }
 shipment.free_methods = [
@@ -340,48 +411,50 @@ preference.shipment = shipment
 preference.save
 
 ```
+```csharp
+Preference preference = new Preference();
+
+preference.Items.Add(
+  new MercadoPago.DataStructures.Preference.Item()
+  {
+    Title = "[FAKER][COMMERCE][PRODUCT_NAME]",
+    Quantity = 1,
+    UnitPrice = (decimal)[FAKER][COMMERCE][PRICE]
+  }
+);
+
+MercadoPago.DataStructures.Preference.Shipment shipments = new MercadoPago.DataStructures.Preference.Shipment()
+ {
+     Mode = MercadoPago.Common.ShipmentMode.Me2,
+     Dimensions = "30x30x30,500",
+     LocalPickUp = true,
+     FreeMethods = new List<int> { 73328 },
+     ReceiverAddress = new MercadoPago.DataStructures.Preference.ReceiverAddress(){
+      ZipCode = "5700",
+      StreetNumber = 123,
+      StreetName = "Street",
+      Floor = "4",
+      Apartment = "C"
+     }
+ };
+
+ preference.Shipments = shipments;
+
+ preference.Save();
+```
 ]]]
 
-```html
 
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Pay</title>
-	</head>
-	<body>
-		<a href="<?php echo $preference['response']['init_point']; ?>">Pay</a>
-	</body>
-</html>
-```
+### Ya integré Mercado Envíos en el checkout, ¿Cómo sigo?
 
+Una vez hayas integrado Mercado Envíos y recibas una venta, solo queda preparar el paquete, entregarlo en un punto de despacho cercano y seguir el envio.
 
+#### Preparar el paquete y entregarlo:
 
-### Paso 3: Mejora la experiencia con la calculadora de cuotas
+* Cada vez que recibas un pago, te llegará ubn e-mail con un botón para imprimir la etiqueta. También podés ver los [pagos pendientes de impresión](https://www.mercadopago.com.ar/activities?type=facet_type_collection&status=facet_shipping_me_all) desde la cuenta de Mercado Pago del vendedor.
 
-Te damos la posibilidad de pre-calcular el costo y los tiempos de envío para que tus compradores puedan verlo previo al _checkout_.
+* Colocá lo que vendiste en una caja, pegale la etiqueta y entregala en algunos de los puntos de despacho cercanos al domicilio configurado.
 
-Para poder realizar el cálculo debes enviar:
+#### Seguir el envío:
 
-* `dimensions`: Es el tamaño del producto que quieres enviar, el formato es: alto x ancho x largo (centímetros), peso (gramos). Consulta los valores admitidos por OCA.
-
-* `zip_code`: Es el código postal de tu comprador.
-
-* `item_price`: Es el precio del producto que vas a enviar. Si son múltiples productos, indicá el precio total.
-
-* `free_method` (opcional): Puedes ofrecer envío gratis, esto te permite generar más ventas. Sólo debes indicarnos el medio de envío que vas a ofrecer como gratis. Luego, el monto del mismo te será debitado de tu cuenta al momento de recibir un pago.
-
-
-### Paso 4: Imprimí la etiqueta
-
-Cada vez que recibas un pago, te llegará un _e-mail_ con un botón para imprimir la etiqueta.
-También puedes ver los [pagos pendientes de impresión](https://www.mercadopago.com.ar/activities?type=collection&status=approved&shipping_or_archived=with_ME&tagME=ready_to_print) desde tu cuenta de Mercado Pago.
-
-
-En una caja incluye todo lo que vendiste. Pega la etiqueta en el paquete y despáchalo. No tendrás que pagarle nada al carrier porque las etiquetas de Mercado Envíos estarán pagas con el dinero que pagó tu comprador para el envío.
-
-### Paso 5: Seguimiento
-Utiliza nuestras herramientas para hacer el seguimiento.
-Tanto en el listado de cobros, como a través de nuestras APIs vas a poder realizar el seguimiento de tus envíos.
-
-Adicionalmente te podemos avisar cuando un envío esté listo para despachar mediante [notificaciones](https://www.mercadopago.com.ar/developers/es/guides/notifications/ipn) que se envían desde los servidores de Mercado Pago a los tuyos. Esto te permitirá administrar tu _stock_ y conocer el estado de los pagos y envíos.
+Vas a podes seguir el curso del paquete desde la cuenta de Mercado Pago del vendedor.
